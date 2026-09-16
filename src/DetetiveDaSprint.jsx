@@ -103,6 +103,21 @@ const CSS = `
 .dds .dots{height:1px;background-image:repeating-linear-gradient(90deg,var(--ink) 0 3px,transparent 3px 7px);opacity:.7;margin:18px 0}
 .dds .pill{font-family:var(--stamp);font-size:12px;padding:3px 9px;border-radius:0;
   border:1px solid var(--ink);color:var(--ink-soft);letter-spacing:.05em}
+
+/* bloco de compartilhar sala (simples) */
+.dds .share{display:inline-flex;flex-direction:column;gap:5px;align-items:flex-start}
+.dds .share .lbl{font-family:var(--stamp);font-size:11px;color:var(--ink-soft);letter-spacing:.08em;text-transform:uppercase}
+.dds .share .share-row{display:inline-flex;align-items:center;gap:10px}
+.dds .share .code{font-family:var(--stamp);font-weight:700;color:var(--accent);font-size:20px;letter-spacing:.16em}
+.dds .share .sprint{font-family:var(--stamp);font-size:12px;color:var(--ink-soft)}
+.dds .share .copy{display:inline-flex;align-items:center;gap:6px;
+  border:1px solid var(--accent);background:var(--paper);border-radius:0;padding:5px 11px;cursor:pointer;
+  color:var(--accent);font-family:var(--stamp);font-size:12px;transition:background .12s,color .12s}
+.dds .share .copy:hover{background:var(--accent);color:var(--paper)}
+.dds .share .copy:active{transform:translate(1px,1px)}
+.dds .share .copy.done{background:var(--accent);color:var(--paper)}
+.dds.neg .share .copy{background:var(--neg-bg)}
+.dds.neg .share .copy.done{background:var(--accent)}
 .dds .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 @media(max-width:640px){.dds .grid2{grid-template-columns:1fr}}
 .dds .fade{animation:fade .35s ease both}
@@ -421,6 +436,30 @@ function Home({onCreate,onJoin,err}){
   );
 }
 
+
+/* Bloco de compartilhar a sala: rótulo, código e botão de copiar. */
+function RoomCode({code,sprint}){
+  const [copied,setCopied]=useState(false);
+  const copy=async()=>{
+    try{ await navigator.clipboard.writeText(code); }
+    catch{ /* fallback silencioso */ }
+    setCopied(true); setTimeout(()=>setCopied(false),1800);
+  };
+  return (
+    <div className="share">
+      <span className="lbl">Compartilhe esta sala</span>
+      <div className="share-row">
+        <span className="code">{code}</span>
+        {sprint && <span className="sprint">· {sprint}</span>}
+        <button className={"copy"+(copied?" done":"")} onClick={copy}
+          aria-label="Copiar código da sala" title="Copiar código">
+          <span>{copied?"Copiado!":"Copiar"}</span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
 /* ============================================================
    TELA: PERSONA (criação do detetive, com avatar montável)
    ============================================================ */
@@ -433,9 +472,9 @@ function Persona({code,sprint,onReady}){
 
   return (
     <div className="fade">
-      <div className="row" style={{justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+      <div className="row" style={{justifyContent:"space-between",alignItems:"flex-start",marginBottom:16,gap:12}}>
         <h2 style={{fontSize:28}}>Escolha seu detetive</h2>
-        <span className="pill">Caso {code} · {sprint}</span>
+        <RoomCode code={code} sprint={sprint}/>
       </div>
 
       <div className="grid2">
@@ -679,9 +718,13 @@ function SalaEspera({code,sprint,room,me,onReveal}){
       <h2 style={{fontSize:30,margin:"10px 0 4px"}}>Aguardando os outros detetives</h2>
       <p className="muted">O caso só é aberto quando toda a equipe termina, para que ninguém influencie ninguém.</p>
 
-      <div className="panel" style={{maxWidth:520,margin:"22px auto 0",textAlign:"left"}}>
+      <div style={{display:"flex",justifyContent:"center",marginTop:18}}>
+        <RoomCode code={code} sprint={sprint}/>
+      </div>
+
+      <div className="panel" style={{maxWidth:520,margin:"18px auto 0",textAlign:"left"}}>
         <div className="row" style={{justifyContent:"space-between",alignItems:"center"}}>
-          <span className="mono">Caso {code} · {sprint}</span>
+          <span className="mono muted" style={{fontSize:13}}>Sprint {sprint}</span>
           <span className="pill">{done}/{total} prontos</span>
         </div>
         <div className="bar" style={{marginTop:12}}>
@@ -709,7 +752,6 @@ function SalaEspera({code,sprint,room,me,onReveal}){
               <div><button className="ghost" onClick={onReveal}>Revelar mesmo assim (facilitador)</button></div>
             </>}
       </div>
-      <p className="muted" style={{fontSize:12,marginTop:16}}>Compartilhe o código <b className="mono" style={{color:"var(--accent)"}}>{code}</b> com quem ainda não entrou.</p>
     </div>
   );
 }
